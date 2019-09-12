@@ -45,7 +45,6 @@ def GetPositionSalaryEstimate(JobTitle, currency):
 
     print(df_names)
 
-
     VacDescription = df.snippet
 
     dfJoin = pd.concat([df_names, salaries], axis=1)
@@ -122,8 +121,8 @@ def GetPositionSalaryEstimate(JobTitle, currency):
 
 
 if __name__ == "__main__":
-    GetPositionSalaryEstimate("'angular' AND 'Frontend Developer'" , "RUB")
+    GetPositionSalaryEstimate("'angular' AND 'Frontend Developer'", "RUB")
 
-    #print(range(len(JsonData)))
+    # print(range(len(JsonData)))
 
     # price=GetPositionSalaryEstimate("'секретарь'",'RUR')
