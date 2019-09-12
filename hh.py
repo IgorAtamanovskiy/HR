@@ -4,7 +4,6 @@ import pandas as pd
 import datetime
 import json
 
-
 def GetDataFromSupplier(JobTitle):
     number_of_pages = 10
     job = JobTitle
@@ -37,8 +36,6 @@ def GetPositionSalaryEstimate(JobTitle, currency):
         for j in range(len(JsonData[i]["items"])):
             df.loc[ind] = JsonData[i]["items"][j]
             ind += 1
-
-    print(df)
 
     salaries = df.salary
     df_names = df.name
