@@ -3,11 +3,20 @@ import requests
 import pandas as pd
 import datetime
 import json
+#import os
 
 def GetDataFromSupplier(JobTitle):
     number_of_pages = 10
     job = JobTitle
+
+    filename = job
+    filename = filename.replace(" AND ", "-").replace("'", "")
+    filename = "responses/hh-" + filename + repr(datetime.datetime.now().timestamp()) + ".json"
+
+    #fullpath = os.path.isfile(os.path.dirname(os.path.abspath(__file__)) + '/' + filename)
+
     data = []
+
     for i in range(number_of_pages):
         url = "https://api.hh.ru/vacancies"
         par = {"text": job, "area": "1", "per_page": "10", "page": i}
@@ -15,9 +24,6 @@ def GetDataFromSupplier(JobTitle):
         e = r.json()
         data.append(e)
 
-    filename = job
-    filename = filename.replace(" AND ", "-").replace("'", "")
-    filename = "responses\hh-" + filename + ".json"
     outfile = open(filename, "w+")
     json.dump(data, outfile)
     outfile.close()
@@ -40,49 +46,63 @@ def GetPositionSalaryEstimate(JobTitle, currency):
     salaries = df.salary
     df_names = df.name
 
-    print(df_names)
-
+    # get vacancies descriptions for wordcloud
     VacDescription = df.snippet
 
+    # create dataframe with names and salaries
     dfJoin = pd.concat([df_names, salaries], axis=1)
 
-    dfJoinWONA = dfJoin.salary.dropna()
+    #print(dfJoin)
 
-    print(dfJoinWONA)
+    dfJoin.salary.dropna()
+    print('3. Step')
+
+    #dfJoinWONA = dfJoin.salary.dropna()
 
     # print(salaries.head())
 
-    frm = [x["from"] for x in salaries]
-    to = [x["to"] for x in salaries]
-    cur = [x["currency"] for x in salaries]
+    frm = [x["from"] for x in dfJoin.salary if x!=None]
+    to = [x["to"] for x in dfJoin.salary if x!=None]
+    cur = [x["currency"] for x in dfJoin.salary if x!=None]
 
-    descr = [x["requirement"] for x in VacDescription]
-
-    VD = {"Description": descr}
-    VD_DF = pd.DataFrame(VD)
+    #descr = [x["requirement"] for x in VacDescription]
+    #VD = {"Description": descr}
+    #VD_DF = pd.DataFrame(VD)
 
     d = {"from": frm, "to": to, "currency": cur}
     ddf = pd.DataFrame(d)
 
-    dfVacNameWPrice = pd.concat([df.name, ddf], axis=1)
+    print('4 step')
 
-    print(dfVacNameWPrice)
+    dfVacNameWPrice = pd.concat([df_names, ddf], axis=1)
+    dfVacNameWPrice=dfVacNameWPrice.fillna(0)
 
-    currency_filter = ddf["currency"] == currency
-    ddfc = ddf[currency_filter]
+    print('5 step')
+
+    currency_filter = dfVacNameWPrice["currency"] == currency
+    dfVacNameWPrice = dfVacNameWPrice[currency_filter]
+
+    fromFilter= dfVacNameWPrice["from"] >0
+    dfVacNameWPrice = dfVacNameWPrice[fromFilter]
+
+    toFilter = dfVacNameWPrice["to"] > 0
+    dfVacNameWPrice = dfVacNameWPrice[toFilter]
+
+    print('6 step')
 
     # wordcloud
 
     from collections import Counter
 
-    vacancy_names = df.name
-    cloud = Counter(vacancy_names)
-    # print(cloud)
+    #vacancy_names = df.name
+    cloud = Counter(df_names)
+
+
     from wordcloud import WordCloud, STOPWORDS
 
     stopwords = set(STOPWORDS)
     cloud = ""
-    for x in list(vacancy_names):
+    for x in list(df_names):
         cloud += x + " "
 
     wordcloud = WordCloud(
@@ -90,7 +110,7 @@ def GetPositionSalaryEstimate(JobTitle, currency):
         height=800,
         stopwords=stopwords,
         min_font_size=8,
-        background_color="black",
+        background_color="white",
     ).generate(cloud)
 
     import matplotlib.pylab as plt
@@ -99,26 +119,26 @@ def GetPositionSalaryEstimate(JobTitle, currency):
     plt.axis("off")
     plt.imshow(wordcloud)
     imgpath = (
-        "imgs\\" + repr(datetime.datetime.now().timestamp()) + "_vacancy_cloud.png"
+        "imgs/" + repr(datetime.datetime.now().timestamp()) + "_vacancy_cloud.png"
     )
     plt.savefig(imgpath)
 
-    print(ddfc)
+    #print(ddfc)
 
     priceestimate = [
-        ddfc["from"].min(),
-        ddfc["to"].max(),
-        ddfc["to"].median(),
-        round(ddfc["to"].mean(), 1),
+        dfVacNameWPrice["from"].min(),
+        dfVacNameWPrice["to"].max(),
+        dfVacNameWPrice["to"].median(),
+        round(dfVacNameWPrice["to"].mean(), 1),
         imgpath,
-        ddfc,
+        dfVacNameWPrice,
     ]
 
     return priceestimate
 
 
 if __name__ == "__main__":
-    GetPositionSalaryEstimate("'angular' AND 'Frontend Developer'", "RUB")
+    GetPositionSalaryEstimate("'секретарь'", "RUR")
 
     # print(range(len(JsonData)))
 
