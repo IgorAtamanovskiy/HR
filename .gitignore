@@ -2,4 +2,5 @@
 /log
 /imgs
 /responses
+/__pycache__
 conf.json
