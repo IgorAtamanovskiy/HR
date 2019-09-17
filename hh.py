@@ -140,7 +140,3 @@ def GetPositionSalaryEstimate(JobTitle, currency):
 
 if __name__ == "__main__":
     GetPositionSalaryEstimate("'секретарь'", "RUR")
-
-    # print(range(len(JsonData)))
-
-    # price=GetPositionSalaryEstimate("'секретарь'",'RUR')
